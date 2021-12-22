@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Jmeter UI
+Comment=Khởi chạy JMeter UI
+Exec=/opt/apache-jmeter-5.4.2/bin/jmeter
+Icon=/opt/apache-jmeter-5.4.2/docs/images/favicon.png
+Path=/srv
+Terminal=false
+StartupNotify=false
+
