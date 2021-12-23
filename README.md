@@ -5,6 +5,8 @@ Docker image setup jmeter cluster lên docker-swarm hoặc k8s, remote qua VNC/b
 
 **Base on image https://hub.docker.com/r/consol/ubuntu-xfce-vnc**
 
+[**Github source**](https://github.com/mkbyme/docker-jmeter-vnc-remote)
+
 This repository contains a collection of Docker images with headless VNC environments.
 
 Each Docker image is installed with the following components:
@@ -71,14 +73,13 @@ Since version `1.1.0` all images run as non-root user per default, so if you wan
 ```bash
 ## Custom Dockerfile
 FROM mkbyme/ubuntu-xfce-vnc-jre8-jmeter
-ENV REFRESHED_AT 2018-03-18
+ENV REFRESHED_AT 2021-12-22
 
 # Switch to root user to install additional software
 USER 0
 
 ## Install a gedit
-RUN yum install -y gedit \
-    && yum clean all
+RUN apt install -y gedit
 
 ## switch back to default user
 USER 1000
