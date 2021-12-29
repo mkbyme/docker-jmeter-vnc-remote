@@ -19,7 +19,7 @@ Each Docker image is installed with the following components:
 * Browsers:
   * Mozilla Firefox
   * Chromium
-* Jmeter 5.4.2
+* Jmeter 5.4.3
   
 
 ## Build Status
