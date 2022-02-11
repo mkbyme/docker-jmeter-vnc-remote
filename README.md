@@ -1,7 +1,7 @@
 # docker-jmeter-vnc-remote
 Docker image setup jmeter cluster lên docker-swarm hoặc k8s, remote qua VNC/browser để chạy test plan
 ## Pull image
-docker pull mkbyme/docker-jmeter-vnc-remote:1.0
+docker pull mkbyme/docker-jmeter-vnc-remote:latest
 
 # Docker container images with "headless" VNC session
 
