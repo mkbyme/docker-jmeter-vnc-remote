@@ -12,7 +12,7 @@ ENV VNC_PW=12345678@Abc
 
 #jmeter base image #docs: https://github.com/justb4/docker-jmeter
 ARG JMETER_VERSION="5.4.3"
-ENV JMETER_HOME /opt/apache-jmeter-lastest
+ENV JMETER_HOME /opt/apache-jmeter-${JMETER_VERSION}
 ENV	JMETER_BIN	${JMETER_HOME}/bin
 ENV	JMETER_DOWNLOAD_URL  https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz
 
@@ -20,15 +20,15 @@ ENV	JMETER_DOWNLOAD_URL  https://archive.apache.org/dist/jmeter/binaries/apache-
 ARG TZ="Asia/Ho_Chi_Minh"
 ENV TZ ${TZ}
 RUN apt update \
-	&& apt install openjdk-8-jdk firefox chromium-browser curl ttf-ancient-fonts -y \ 
+	&& apt install openjdk-8-jdk firefox chromium-browser curl ttf-ancient-fonts ttf-ubuntu-font-family gedit -y \ 
     && update-alternatives --config java \
 	&& apt install ca-certificates -y \
 	&& mkdir -p /tmp/dependencies  \
 	&& curl -L --silent ${JMETER_DOWNLOAD_URL} >  /tmp/dependencies/apache-jmeter-${JMETER_VERSION}.tgz  \
 	&& mkdir -p /opt  \
 	&& tar -xzf /tmp/dependencies/apache-jmeter-${JMETER_VERSION}.tgz -C /opt  \
-	&& mv /opt/apache-jmeter-${JMETER_VERSION} ${JMETER_HOME} \
-	&& rm -rf /tmp/dependencies
+	&& rm -rf /tmp/dependencies \
+	&& apt clean -y
 
 # TODO: plugins (later)
 # && unzip -oq "/tmp/dependencies/JMeterPlugins-*.zip" -d $JMETER_HOME
