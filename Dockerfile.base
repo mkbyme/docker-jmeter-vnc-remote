@@ -1,0 +1,32 @@
+FROM consol/ubuntu-xfce-vnc:latest
+#chuyen sang root user https://hub.docker.com/r/consol/ubuntu-xfce-vnc
+
+USER 0
+ENV REFRESHED_AT 2022-02-14
+#set lai password ve misa default
+ENV VNC_PW=12345678@Abc
+
+#############################
+### Update Image 
+#############################
+
+# Install extra packages # chromium-browser 
+ARG TZ="Asia/Ho_Chi_Minh"
+ENV TZ ${TZ}
+RUN apt update \
+	&& apt install openjdk-8-jdk firefox chromium-browser curl ttf-ancient-fonts ttf-ubuntu-font-family gedit ca-certificates -y \ 
+    && update-alternatives --config java \
+	&& apt clean -y
+
+#############################
+### Update Image  END
+#############################
+
+#############################
+### START UP SCRIPT 
+#############################
+COPY ./script/vnc_startup.sh /dockerstartup
+COPY ./script/ui.js /headless/noVNC/app
+#############################
+### START UP SCRIPT  END
+#############################
