@@ -1,53 +1,6 @@
 #!/bin/bash
-# --- every exit != 0 fails the script
+### every exit != 0 fails the script
 set -e
-
-echo "---------------------------------------------------------"
-echo "--- PREPARE MOUNT CONFIG (Plugins, Certs, Config      ---"
-echo "---------------------------------------------------------"
-if [ -d /plugins ] && [ -n "$(ls -A /plugins)" ]
-then
-    echo "Copied plugin from plugins to $JMETER_HOME/lib/ext"
-    for plugin in /plugins/*.jar; do
-        cp $plugin $JMETER_HOME/lib/ext
-    done;
-else
-    echo "No plugin or empty at folder '/plugins' to install"
-fi
-
-# Install misa sefl-cert.crt available on /certs volume
-if [ -d /certs ] && [ -n "$(ls -A /certs)" ]
-then
-    echo "Trusted cert *.crt from /certs"
-    mkdir /usr/local/share/ca-certificates/ -p
-    cp /certs/*.crt /usr/local/share/ca-certificates/
-    update-ca-certificates
-else
-    echo "No cert or folder empty at folder '/certs' to trust"
-fi
-
-# Copy jmeter user.properties config  available on /home/jmeterconfig volume
-if [ -d /home/jmeterconfig ] && [ -n "$(ls -A /home/jmeterconfig)" ]
-then
-    echo "Copied jmeter config from /home/jmeterconfig to $JMETER_BIN"
-    cp /home/jmeterconfig/*.properties $JMETER_BIN
-else
-    echo "No config or empty at folder '/home/jmeterconfig' to config jmeter at $JMETER_BIN"
-fi
-
-# Copy guideline to /headless/Desktop  available on /home/jmeterguide volume
-DESKTOP_PATH="/headless/Desktop"
-if [ -d /home/jmeterguide ] && [ -n "$(ls -A /home/jmeterguide)" ]
-then
-    echo "Copied jmeter guide from /home/jmeterguide to $DESKTOP_PATH"
-    cp /home/jmeterguide/* $DESKTOP_PATH
-else
-    echo "No guide or empty at folder '/home/jmeterguide' to config jmeter at $DESKTOP_PATH"
-fi
-
-echo "---------------------------------------------------------"
-echo "--- PREPARE MOUNT CONFIG (Plugins, Certs, Config) END ---"
-echo "---------------------------------------------------------"
 
 ## print out help
 help (){

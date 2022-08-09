@@ -2,7 +2,7 @@ FROM consol/ubuntu-xfce-vnc:latest
 #chuyen sang root user https://hub.docker.com/r/consol/ubuntu-xfce-vnc
 
 USER 0
-ENV REFRESHED_AT 2022-02-14
+ENV REFRESHED_AT 2022-08-09
 #set lai password ve misa default
 ENV VNC_PW=12345678@Abc
 
@@ -14,7 +14,14 @@ ENV VNC_PW=12345678@Abc
 ARG TZ="Asia/Ho_Chi_Minh"
 ENV TZ ${TZ}
 RUN apt update \
-	&& apt install openjdk-8-jdk firefox chromium-browser curl ttf-ancient-fonts ttf-ubuntu-font-family gedit ca-certificates -y \ 
+	&& apt upgrade \
+	&& apt install software-properties-common -y \
+	&& add-apt-repository ppa:openjdk-r/ppa -y \
+	&& apt update
+RUN apt install openjdk-17-jre
+
+RUN	apt update \
+	&& apt install firefox chromium-browser openjdk-17-jre -y \ 
     && update-alternatives --config java \
 	&& apt clean -y
 
@@ -26,6 +33,7 @@ RUN apt update \
 ### START UP SCRIPT 
 #############################
 COPY ./script/vnc_startup.sh /dockerstartup
+RUN chmod +x /dockerstartup/vnc_startup.sh
 COPY ./script/ui.js /headless/noVNC/app
 #############################
 ### START UP SCRIPT  END
