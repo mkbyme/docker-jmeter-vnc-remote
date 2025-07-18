@@ -1,0 +1,1 @@
+docker run -it  --rm -p  5901:5901 -u 0  -e USER=root   -p  6901:6901 mkbyme/docker-jmeter-vnc-remote:jmeter5.5-ubuntu20.04 -d

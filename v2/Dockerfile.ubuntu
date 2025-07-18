@@ -1,0 +1,58 @@
+# This Dockerfile is used to build a headless vnc image based on Ubuntu 24.04
+
+FROM ubuntu:24.04
+
+LABEL io.k8s.description="Headless VNC Container with Xfce window manager, firefox and chromium" \
+      io.k8s.display-name="Headless VNC Container based on Ubuntu" \
+      io.openshift.expose-services="6901:http,5901:xvnc" \
+      io.openshift.tags="vnc, ubuntu, xfce" \
+      io.openshift.non-scalable=true
+
+# Set TimeZone and Environment Variables
+ARG TZ="Asia/Ho_Chi_Minh"
+ENV TZ=${TZ} \
+    DISPLAY=:1 \
+    VNC_PORT=5901 \
+    NO_VNC_PORT=6901 \
+    HOME=/headless \
+    TERM=xterm \
+    STARTUPDIR=/dockerstartup \
+    INST_SCRIPTS=/headless/install \
+    NO_VNC_HOME=/headless/noVNC \
+    DEBIAN_FRONTEND=noninteractive \
+    VNC_COL_DEPTH=24 \
+    VNC_RESOLUTION=1280x1024 \
+    VNC_PW=12345678@Abc \
+    VNC_VIEW_ONLY=false \
+    LANG='en_US.UTF-8' \
+    LANGUAGE='en_US:en' \
+    LC_ALL='en_US.UTF-8'
+
+WORKDIR $HOME
+
+# Copy installer scripts
+COPY ./src/ubuntu/install/0*.sh \
+     ./src/ubuntu/install/package_installer.sh \
+     $INST_SCRIPTS/
+
+# Copy support scripts that will be needed during installation
+COPY ./src/common/scripts/user_mapping.sh \
+     $INST_SCRIPTS/
+
+# Install all packages in one layer
+RUN bash $INST_SCRIPTS/package_installer.sh
+
+# Copy remaining configuration scripts
+COPY ./src/common/scripts/ $STARTUPDIR/
+COPY ./src/common/xfce/ $HOME/
+
+# Configure services and set permissions
+RUN chmod +x $STARTUPDIR/*.sh && \
+    chmod +x $HOME/wm_startup.sh && \
+    chown -R 1000:1000 $HOME $STARTUPDIR /dockerstartup
+
+# Final settings
+EXPOSE $VNC_PORT $NO_VNC_PORT
+# USER 1000
+ENTRYPOINT ["/dockerstartup/vnc_startup.sh"]
+CMD ["--wait"]

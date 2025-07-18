@@ -2,7 +2,7 @@ FROM consol/ubuntu-xfce-vnc:latest
 #chuyen sang root user https://hub.docker.com/r/consol/ubuntu-xfce-vnc
 
 USER 0
-ENV REFRESHED_AT 2022-08-09
+ENV REFRESHED_AT=2025-07-16
 #set lai password ve misa default
 ENV VNC_PW=12345678@Abc
 
@@ -12,19 +12,20 @@ ENV VNC_PW=12345678@Abc
 
 # Install extra packages # chromium-browser 
 ARG TZ="Asia/Ho_Chi_Minh"
-ENV TZ ${TZ}
+ENV TZ=${TZ}
 RUN apt update \
-	&& apt upgrade \
-	&& apt install software-properties-common -y \
-	&& add-apt-repository ppa:openjdk-r/ppa -y \
-	&& apt update
-RUN apt install openjdk-17-jre
+    && apt install software-properties-common -y \
+    && add-apt-repository ppa:openjdk-r/ppa -y \
+    && apt update
 
-RUN	apt update \
-	&& apt install firefox chromium-browser openjdk-17-jre -y \ 
-    && update-alternatives --config java \
-	&& apt clean -y
+RUN apt install -y --no-install-recommends firefox chromium-browser openjdk-17-jre ca-certificates-java \ 
+    && update-alternatives --config java
 
+RUN apt install -y --no-install-recommends  curl wget
+
+RUN apt-get autoremove -y \
+ && apt-get clean -y \ 
+ && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 #############################
 ### Update Image  END
 #############################

@@ -6,27 +6,18 @@ set -e
 help (){
 echo "
 USAGE:
-docker run -it -p 6901:6901 -p 5901:5901 consol/<image>:<tag> <option>
+docker run -it -p 6901:6901 -p 5901:5901 mkbyme/<image>:<tag> <option>
 
 IMAGES:
-consol/ubuntu-xfce-vnc
-consol/centos-xfce-vnc
-consol/ubuntu-icewm-vnc
-consol/centos-icewm-vnc
-
-TAGS:
-latest  stable version of branch 'master'
-dev     current development version of branch 'dev'
+mkbyme/docker-jmeter-vnc-remote:<tag>
 
 OPTIONS:
 -w, --wait      (default) keeps the UI and the vncserver up until SIGINT or SIGTERM will received
 -s, --skip      skip the vnc startup and just execute the assigned command.
-                example: docker run consol/centos-xfce-vnc --skip bash
+                example: docker run mkbyme/docker-jmeter-vnc-remote --skip bash
 -d, --debug     enables more detailed startup output
-                e.g. 'docker run consol/centos-xfce-vnc --debug bash'
+                e.g. 'docker run mkbyme/docker-jmeter-vnc-remote --debug bash'
 -h, --help      print out this help
-
-Fore more information see: https://github.com/ConSol/docker-headless-vnc-container
 "
 }
 if [[ $1 =~ -h|--help ]]; then
@@ -34,8 +25,8 @@ if [[ $1 =~ -h|--help ]]; then
     exit 0
 fi
 
-# should also source $STARTUPDIR/generate_container_user
-source $HOME/.bashrc
+# Source the .bashrc which already contains our environment setup
+[[ -f "$HOME/.bashrc" ]] && source $HOME/.bashrc
 
 # add `--skip` to startup args, to skip the VNC startup procedure
 if [[ $1 =~ -s|--skip ]]; then
@@ -51,20 +42,28 @@ fi
 
 ## correct forwarding of shutdown signal
 cleanup () {
+    echo "Cleaning up..."
     kill -s SIGTERM $!
+    pkill -f Xtigervnc
+    pkill -f xfwm4
+    pkill -f xfdesktop
+    rm -rf /tmp/.X*-lock /tmp/.X11-unix/*
     exit 0
 }
 trap cleanup SIGINT SIGTERM
 
-## write correct window size to chrome properties
-# $STARTUPDIR/chrome-init.sh
+## Kill any existing VNC/X processes
+echo -e "\n------------------ Cleanup existing processes ------------------"
+pkill -f Xtigervnc || true
+pkill -f xfwm4 || true
+pkill -f xfdesktop || true
+rm -rf /tmp/.X*-lock /tmp/.X11-unix/*
 
 ## resolve_vnc_connection
 VNC_IP=$(hostname -i)
 
 ## change vnc password
 echo -e "\n------------------ change VNC password  ------------------"
-# first entry is control, second is view (if only one is valid for both)
 mkdir -p "$HOME/.vnc"
 PASSWD_PATH="$HOME/.vnc/passwd"
 
@@ -76,24 +75,12 @@ fi
 if [[ $VNC_VIEW_ONLY == "true" ]]; then
     echo "start VNC server in VIEW ONLY mode!"
     #create random pw to prevent access
-    echo $(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 20) | vncpasswd -f > $PASSWD_PATH
+    echo $(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 20) | tigervncpasswd -f > $PASSWD_PATH
 fi
-echo "$VNC_PW" | vncpasswd -f >> $PASSWD_PATH
+echo "$VNC_PW" | tigervncpasswd -f >> $PASSWD_PATH
 chmod 600 $PASSWD_PATH
 
-
-## start vncserver and noVNC webclient
-echo -e "\n------------------ start noVNC  ----------------------------"
-# Version 1.0.0
-if [[ $DEBUG == true ]]; then echo "$NO_VNC_HOME/utils/launch.sh --vnc localhost:$VNC_PORT --listen $NO_VNC_PORT"; fi
-$NO_VNC_HOME/utils/launch.sh --vnc localhost:$VNC_PORT --listen $NO_VNC_PORT &> $STARTUPDIR/no_vnc_startup.log &
-PID_SUB=$!
-
-# # Version 1.3.0
-# if [[ $DEBUG == true ]]; then echo "$NO_VNC_HOME/utils/novnc_proxy --vnc localhost:$VNC_PORT --listen $NO_VNC_PORT"; fi
-# $NO_VNC_HOME/utils/novnc_proxy --vnc localhost:$VNC_PORT --listen $NO_VNC_PORT &> $STARTUPDIR/no_vnc_startup.log &
-# PID_SUB=$!
-
+## Start VNC server
 echo -e "\n------------------ start VNC server ------------------------"
 echo "remove old vnc locks to be a reattachable container"
 vncserver -kill $DISPLAY &> $STARTUPDIR/vnc_startup.log \
@@ -104,14 +91,24 @@ echo -e "start vncserver with param: VNC_COL_DEPTH=$VNC_COL_DEPTH, VNC_RESOLUTIO
 if [[ $DEBUG == true ]]; then echo "vncserver $DISPLAY -depth $VNC_COL_DEPTH -geometry $VNC_RESOLUTION"; fi
 vncserver $DISPLAY -depth $VNC_COL_DEPTH -geometry $VNC_RESOLUTION &> $STARTUPDIR/no_vnc_startup.log
 
+# Wait for VNC to start properly
+sleep 2
+
+# Start window manager
 echo -e "start window manager\n..."
 $HOME/wm_startup.sh &> $STARTUPDIR/wm_startup.log
+
+## Start noVNC
+echo -e "\n------------------ start noVNC  ----------------------------"
+if [[ $DEBUG == true ]]; then echo "$NO_VNC_HOME/utils/novnc_proxy --vnc localhost:$VNC_PORT --listen $NO_VNC_PORT"; fi
+cd $NO_VNC_HOME
+./utils/novnc_proxy --vnc localhost:$VNC_PORT --listen $NO_VNC_PORT &> $STARTUPDIR/no_vnc_startup.log &
+PID_SUB=$!
 
 ## log connect options
 echo -e "\n\n------------------ VNC environment started ------------------"
 echo -e "\nVNCSERVER started on DISPLAY= $DISPLAY \n\t=> connect via VNC viewer with $VNC_IP:$VNC_PORT"
 echo -e "\nnoVNC HTML client started:\n\t=> connect via http://$VNC_IP:$NO_VNC_PORT/?password=...\n"
-
 
 if [[ $DEBUG == true ]] || [[ $1 =~ -t|--tail-log ]]; then
     echo -e "\n------------------ $HOME/.vnc/*$DISPLAY.log ------------------"
