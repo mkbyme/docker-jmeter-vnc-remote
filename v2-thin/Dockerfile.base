@@ -1,0 +1,30 @@
+# Stage prepare: cài đặt đầy đủ package và dependencies
+FROM ubuntu:24.04 AS prepare
+ENV DEBIAN_FRONTEND=noninteractive
+ARG TZ="Asia/Ho_Chi_Minh"
+ENV TZ=${TZ}
+
+COPY scripts/common/00-prepare.sh /scripts/common/00-prepare.sh
+RUN chmod +x /scripts/common/00-prepare.sh && /scripts/common/00-prepare.sh
+
+# Stage final kế thừa toàn bộ từ prepare
+FROM prepare AS final
+ENV USER=ubuntu
+ENV HOME=/home/$USER
+ENV DISPLAY=:1
+
+# ENV VNC_PASSWORD=123456
+COPY scripts/ /scripts/
+RUN chmod +x /scripts/ -R
+RUN /scripts/common/01-vnc.sh && \
+    /scripts/common/02-browser.sh && \
+    /scripts/common/03-noVNC.sh
+
+COPY scripts/run-chrome-wrapper.sh /usr/local/bin/google-chrome-stable
+RUN chmod +x /usr/local/bin/google-chrome-stable
+USER $USER
+WORKDIR $HOME
+COPY scripts/start.sh $HOME/start.sh
+RUN sudo chmod +x $HOME/start.sh
+EXPOSE 5901 6901
+CMD ["./start.sh"]
